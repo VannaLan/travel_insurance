@@ -1,7 +1,7 @@
 # ✈️ AI 旅平險專員
 
 > 生成式 AI 期末報告｜文件檢索系統（RAG）  
-> 作者：朱政安（Zheng-An Zhu）
+> 作者：謝佳蓉、邱淳湄
 
 以 RAG（Retrieval-Augmented Generation）技術建立的旅行平安保險智慧查詢系統。使用者可以用自然語言提問，系統會從各大保險公司的正式條款中精確擷取相關內容，並生成有來源根據的回答。
 
@@ -15,13 +15,13 @@ PDF 條款
 原始文字
    ↓ 滑動視窗切塊（400字/chunk，80字 overlap）
 Chunks
-   ↓ OpenAI text-embedding-3-small 向量化
+   ↓ sentence-transformers 本地向量化（免費）
 向量
    ↓ FAISS IndexFlatIP 建立索引
 向量資料庫
    ↑ 使用者提問（同樣向量化後比對）
 Top-K 相關 Chunks
-   ↓ 組合 Prompt → GPT-4o-mini
+   ↓ 組合 Prompt → Groq llama-3.3-70b（免費）
 有來源的精確回答
 ```
 
@@ -29,40 +29,61 @@ Top-K 相關 Chunks
 
 ## 🚀 快速開始
 
-### 1. 環境設定
+### 1. Clone 專案
 
 ```bash
-git clone https://github.com/<your-username>/travel-insurance-rag
-cd travel-insurance-rag
-
-pip install -r requirements.txt
-
-# 設定 OpenAI API Key
-export OPENAI_API_KEY="sk-..."
+git clone https://github.com/VannaLan/travel_insurance
+cd travel_insurance
 ```
 
-### 2. 放入保單 PDF
+### 2. 安裝套件
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 取得 Groq API Key 並建立 `.env`
+
+1. 前往 [https://console.groq.com](https://console.groq.com) 免費註冊
+2. 左側選單 → **API Keys** → **Create API Key**
+3. 複製 `gsk_...` 開頭的金鑰
+4. 在專案根目錄建立 `.env` 檔案，填入以下內容：
+
+```
+GROQ_API_KEY=你的金鑰貼在這裡
+```
+
+> ⚠️ `.env` 已被 `.gitignore` 排除，不會上傳到 GitHub，請勿將金鑰直接寫進程式碼。
+
+### 4. 放入保單 PDF
 
 ```
 data/raw/
-  ├── 富邦旅平險條款.pdf
-  ├── 國泰旅平險條款.pdf
-  └── 新光旅平險條款.pdf
+  ├── 富邦產物旅行平安保險_旅-20180703_.pdf
+  ├── condition_tp_card.pdf
+  ├── V5_(快易保)投保規定_投保人須知_聲明事項.pdf
+  ├── overseas_travel_20260401.pdf
+  ├── domestic_travel_20260401.pdf
+  └── 新光產物全球海外緊急急難救助服務辦法(114年適用)2.pdf
 ```
 
-### 3. 建立索引
+> 富邦產險：前三份｜國泰世紀產險：中間兩份｜新光產險：最後一份
+
+### 5. 建立索引
 
 ```bash
 python src/rag_pipeline.py build
 ```
 
-### 4. 啟動聊天介面
+> 首次執行會自動下載約 500MB 的中文 Embedding 模型，請耐心等候。
+
+### 6. 啟動聊天介面
 
 ```bash
 streamlit run src/app.py
 ```
 
-### 5. 執行驗證分析
+### 7. 執行驗證分析
 
 ```bash
 python src/evaluate.py
@@ -96,9 +117,9 @@ travel-insurance-rag/
 |------|----------|
 | 程式碼撰寫與架構設計 | Claude Sonnet（claude.ai）|
 | PDF 解析 | pdfplumber |
-| 文字向量化（Embedding） | OpenAI text-embedding-3-small |
+| 文字向量化（Embedding） | sentence-transformers（本地，免費）|
 | 向量資料庫 | FAISS（faiss-cpu）|
-| 回答生成 | OpenAI GPT-4o-mini |
+| 回答生成 | Groq llama-3.3-70b-versatile（免費）|
 | 聊天介面 | Streamlit |
 | 輔助 IDE | VS Code |
 | 系統環境 | Python 3.11, macOS / Ubuntu |
